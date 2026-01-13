@@ -133,3 +133,18 @@ def cast_vote(
         voted_sessions.add((poll_id, x_session_id))
 
     return updated_poll
+
+
+@app.get("/api/stats")
+def get_stats() -> dict[str, int]:
+    """Get poll statistics."""
+    total_polls = len(polls)
+    active_polls = len([p for p in polls.values() if p.is_active])
+    total_votes = sum(
+        sum(opt.vote_count for opt in poll.options) for poll in polls.values()
+    )
+    return {
+        "total_polls": total_polls,
+        "active_polls": active_polls,
+        "total_votes": total_votes,
+    }
