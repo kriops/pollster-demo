@@ -1,0 +1,22 @@
+name: Claude Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Review this PR for:
+            - Type safety (no 'any', proper hints)
+            - Test coverage for new endpoints
+            - OpenAPI spec consistency
+            - Code style per CLAUDE.md
+            Be specific about issues and suggest fixes.
