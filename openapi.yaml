@@ -1,0 +1,274 @@
+openapi: 3.1.0
+info:
+  title: Pollster API
+  description: Real-time poll application API
+  version: 1.0.0
+
+servers:
+  - url: /api
+    description: API server
+
+paths:
+  /polls:
+    get:
+      operationId: listPolls
+      summary: List all active polls
+      responses:
+        '200':
+          description: List of active polls
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Poll'
+
+    post:
+      operationId: createPoll
+      summary: Create a new poll
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePollRequest'
+      responses:
+        '201':
+          description: Poll created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Poll'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+  /polls/{poll_id}:
+    get:
+      operationId: getPoll
+      summary: Get a specific poll with results
+      parameters:
+        - name: poll_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Poll details with current results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Poll'
+        '404':
+          description: Poll not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /polls/{poll_id}/vote:
+    post:
+      operationId: castVote
+      summary: Cast a vote on a poll
+      parameters:
+        - name: poll_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: X-Session-ID
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Session ID to prevent duplicate voting
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoteRequest'
+      responses:
+        '200':
+          description: Vote cast successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Poll'
+        '400':
+          description: Invalid option ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Poll not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Already voted from this session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    Option:
+      type: object
+      required:
+        - id
+        - text
+        - vote_count
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the option
+        text:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: The option text
+        vote_count:
+          type: integer
+          minimum: 0
+          description: Number of votes for this option
+
+    Poll:
+      type: object
+      required:
+        - id
+        - question
+        - options
+        - created_at
+        - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the poll
+        question:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: The poll question
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/Option'
+          minItems: 2
+          maxItems: 10
+          description: Available options for the poll
+        created_at:
+          type: string
+          format: date-time
+          description: When the poll was created
+        is_active:
+          type: boolean
+          description: Whether the poll is still accepting votes
+
+    CreatePollRequest:
+      type: object
+      required:
+        - question
+        - options
+      properties:
+        question:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: The poll question
+        options:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 200
+          minItems: 2
+          maxItems: 10
+          description: List of option texts
+
+    VoteRequest:
+      type: object
+      required:
+        - option_id
+      properties:
+        option_id:
+          type: string
+          format: uuid
+          description: ID of the option to vote for
+
+    PollResults:
+      type: object
+      required:
+        - poll_id
+        - total_votes
+        - options
+      properties:
+        poll_id:
+          type: string
+          format: uuid
+        total_votes:
+          type: integer
+          minimum: 0
+        options:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - text
+              - vote_count
+              - percentage
+            properties:
+              id:
+                type: string
+                format: uuid
+              text:
+                type: string
+              vote_count:
+                type: integer
+              percentage:
+                type: number
+                format: float
+                minimum: 0
+                maximum: 100
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Error message
+
+    ValidationError:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: array
+          items:
+            type: object
+            properties:
+              loc:
+                type: array
+                items:
+                  oneOf:
+                    - type: string
+                    - type: integer
+              msg:
+                type: string
+              type:
+                type: string

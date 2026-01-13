@@ -1,0 +1,61 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: #fff;
+  border-bottom: 1px solid #e9ecef;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.app-title {
+  font-size: 1.5em;
+  font-weight: bold;
+  color: #007bff;
+  text-decoration: none;
+}
+
+.app-title:hover {
+  color: #0056b3;
+}
+
+.app-nav {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.nav-link {
+  color: #333;
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  background: #f8f9fa;
+}
+
+.nav-link-primary {
+  background: #007bff;
+  color: white;
+}
+
+.nav-link-primary:hover {
+  background: #0056b3;
+}
+
+.app-main {
+  flex: 1;
+  padding: 24px;
+  background: #f8f9fa;
+}
