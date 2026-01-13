@@ -250,3 +250,42 @@ class TestHealthCheck:
         response = client.get("/health")
         assert response.status_code == 200
         assert response.json()["status"] == "healthy"
+
+
+class TestStats:
+    """Tests for GET /api/stats."""
+
+    def test_stats_empty(self, client: TestClient) -> None:
+        """Test stats with no polls."""
+        response = client.get("/api/stats")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total_polls"] == 0
+        assert data["active_polls"] == 0
+        assert data["total_votes"] == 0
+
+    def test_stats_with_polls(self, client: TestClient) -> None:
+        """Test stats with polls and votes."""
+        # Create two polls
+        client.post(
+            "/api/polls",
+            json={"question": "Poll 1?", "options": ["A", "B"]},
+        )
+        poll_response = client.post(
+            "/api/polls",
+            json={"question": "Poll 2?", "options": ["X", "Y"]},
+        )
+        poll = poll_response.json()
+
+        # Vote on the second poll
+        client.post(
+            f"/api/polls/{poll['id']}/vote",
+            json={"option_id": poll["options"][0]["id"]},
+        )
+
+        response = client.get("/api/stats")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total_polls"] == 2
+        assert data["active_polls"] == 2
+        assert data["total_votes"] == 1
